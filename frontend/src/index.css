@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-paper text-ink font-sans antialiased transition-colors duration-300 dark:bg-ink dark:text-paper;
+}
+
+::selection {
+  @apply bg-teal/40 text-ink;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #76ABAE;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #76ABAE55;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* door-tag notch used on room cards — echoes a physical door plate hole */
+.tag-hole {
+  box-shadow: inset 0 0 0 1px rgba(34, 40, 49, 0.08);
+}
+
+.dark .tag-hole {
+  box-shadow: inset 0 0 0 1px rgba(238, 238, 238, 0.12);
+}
+
+/* ---------------------------------------------------------------- *
+ * Project-wide stylish hover polish.
+ * These rules are purely additive — they don't change any existing
+ * class, color, layout, or component logic, they only add a subtle
+ * hover response on top of what's already there.
+ * ---------------------------------------------------------------- */
+
+/* Plain buttons/links get a gentle lift + shadow on hover.
+   Framer-motion buttons already animate via inline styles, so this
+   simply adds extra polish without conflicting with them. */
+button:not(:disabled),
+a {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(1.03);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0.5px);
+}
+
+/* Cards (stat cards, room tags, panels) get a slightly deeper shadow
+   and a soft teal glow on hover to feel more tactile. */
+.shadow-card {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.shadow-card:hover {
+  box-shadow: 0 2px 0 rgba(34, 40, 49, 0.04), 0 14px 30px -16px rgba(118, 171, 174, 0.45), 0 8px 20px -14px rgba(34, 40, 49, 0.35);
+}
+
+/* Table rows already highlight on hover — add a quick left accent bar
+   so the highlighted row reads more clearly at a glance. */
+tbody tr {
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+tbody tr:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #76ABAE;
+}
