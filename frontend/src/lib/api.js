@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://nestwell.onrender.com'
+const API_BASE_URL = 'https://nestwell.onrender.com/api'
 const AUTH_STORAGE_KEY = 'nestwell-auth'
 
 function getToken() {
