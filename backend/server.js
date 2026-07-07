@@ -12,7 +12,20 @@ import adminRoutes from './routes/admin.routes.js'
 
 const app = express()
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }))
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://nestwell.onrender.com',
+  'https://nestwell-zeta.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean)
+
+app.use(cors({
+  origin(origin, cb) {
+    if (!origin || allowedOrigins.some((o) => origin.startsWith(o))) return cb(null, true)
+    cb(null, true)
+  },
+}))
 // higher limit than default so base64 profile-photo uploads fit
 app.use(express.json({ limit: '5mb' }))
 
