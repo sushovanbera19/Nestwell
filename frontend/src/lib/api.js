@@ -60,6 +60,7 @@ export const tenantsApi = {
   create: (payload) => api('/tenants', { method: 'POST', body: JSON.stringify(payload) }),
   update: (id, payload) => api(`/tenants/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   remove: (id) => api(`/tenants/${id}`, { method: 'DELETE' }),
+  unlinkedUsers: () => api('/tenants/unlinked-users'),
 }
 
 export const rentApi = {

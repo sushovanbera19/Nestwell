@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import TenantSkeleton from '../components/TenantSkeleton'
 import { motion } from 'framer-motion'
-import { Edit2, Mail, Phone, Trash2 } from 'lucide-react'
+import { Edit2, Mail, Phone, Trash2, UserPlus } from 'lucide-react'
 import SearchInput from '../components/SearchInput'
 import StatusBadge from '../components/StatusBadge'
 import { initials, avatarTint } from '../lib/utils'
 import { tenantsApi, roomsApi } from '../lib/api'
 
-const blankTenant = { name: '', email: '', phone: '', room: '', rentStatus: 'Pending' }
+const blankTenant = { name: '', email: '', phone: '', room: '', rentStatus: 'Pending', user: '' }
 
 function formatDate(value) {
   return value ? new Date(value).toISOString().slice(0, 10) : ''
@@ -16,6 +16,7 @@ function formatDate(value) {
 export default function Tenants() {
   const [tenants, setTenants] = useState([])
   const [rooms, setRooms] = useState([])
+  const [unlinkedUsers, setUnlinkedUsers] = useState([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,9 +28,10 @@ export default function Tenants() {
     async function loadTenants() {
       try {
         setLoading(true)
-        const [t, r] = await Promise.all([tenantsApi.list(), roomsApi.list()])
+        const [t, r, u] = await Promise.all([tenantsApi.list(), roomsApi.list(), tenantsApi.unlinkedUsers()])
         setTenants(t)
         setRooms(r)
+        setUnlinkedUsers(u)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -46,6 +48,19 @@ export default function Tenants() {
 
   const update = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
+  const linkUser = (userId) => {
+    if (!userId) return
+    const user = unlinkedUsers.find((u) => u._id === userId)
+    if (!user) return
+    setForm((prev) => ({
+      ...prev,
+      user: userId,
+      name: prev.name || user.name || '',
+      email: prev.email || user.email || '',
+      phone: prev.phone || user.phone || '',
+    }))
+  }
+
   const resetForm = () => {
     setForm(blankTenant)
     setEditingId(null)
@@ -59,6 +74,7 @@ export default function Tenants() {
       phone: tenant.phone || '',
       room: tenant.room || '',
       rentStatus: tenant.rentStatus || 'Pending',
+      user: tenant.user || '',
     })
     setEditingId(tenant._id)
     setShowForm(true)
@@ -135,6 +151,23 @@ export default function Tenants() {
       {showForm && (
         <motion.form onSubmit={handleSave} initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-ink/10 bg-white p-6 shadow-card dark:border-paper/10 dark:bg-ink-soft">
           <h2 className="mb-5 font-display text-lg font-medium text-ink dark:text-paper">{editingId ? 'Update tenant' : 'Add New Tenant'}</h2>
+
+          {!editingId && unlinkedUsers.length > 0 && (
+            <div className="mb-4 flex items-center gap-3 rounded-lg border border-teal/20 bg-teal-mist/30 px-4 py-3 dark:border-teal/10 dark:bg-teal/5">
+              <UserPlus className="h-4 w-4 shrink-0 text-teal-deep dark:text-teal" />
+              <select
+                value=""
+                onChange={(e) => linkUser(e.target.value)}
+                className="w-full rounded-lg border border-ink/10 bg-white px-3 py-2 font-sans text-sm text-ink focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper"
+              >
+                <option value="">Link to registered user (auto-fills name &amp; email)...</option>
+                {unlinkedUsers.map((u) => (
+                  <option key={u._id} value={u._id}>{u.name} — {u.email}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
             <input required value={form.name} onChange={update('name')} placeholder="Full name" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
             <input required value={form.email} onChange={update('email')} type="email" placeholder="Email" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />

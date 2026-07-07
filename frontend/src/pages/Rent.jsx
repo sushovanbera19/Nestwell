@@ -108,6 +108,12 @@ export default function Rent() {
     setShowForm(false)
   }
 
+  const handleTenantSelect = (tenantId) => {
+    setForm((prev) => ({ ...prev, tenant: tenantId, amount: prev.amount }))
+  }
+
+  const selectedTenant = tenants.find((t) => t._id === form.tenant)
+
   const handleCreate = async (e) => {
     e.preventDefault()
     setError('')
@@ -160,10 +166,19 @@ export default function Rent() {
         <motion.form onSubmit={handleCreate} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-ink/10 bg-white p-6 shadow-card dark:border-paper/10 dark:bg-ink-soft">
           <h2 className="mb-5 font-display text-lg font-medium text-ink dark:text-paper">Create Rent Record</h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <select required value={form.tenant} onChange={update('tenant')} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
+            <select required value={form.tenant} onChange={(e) => handleTenantSelect(e.target.value)} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
               <option value="">Select tenant...</option>
-              {tenants.map((t) => <option key={t._id} value={t._id}>{t.name} — Room {t.room || '-'}</option>)}
+              {tenants.map((t) => (
+                <option key={t._id} value={t._id}>
+                  {t.name} — {t.email} — Room {t.room || '-'}
+                </option>
+              ))}
             </select>
+            {selectedTenant && (
+              <div className="rounded-lg border border-ink/10 bg-paper/50 px-4 py-2.5 font-sans text-sm text-ink/70 dark:border-paper/10 dark:bg-ink dark:text-paper/70">
+                {selectedTenant.name} · {selectedTenant.email} · Room {selectedTenant.room}
+              </div>
+            )}
             <input value={form.month} onChange={update('month')} placeholder={`e.g. ${currentMonth()}`} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
             <input required value={form.amount} onChange={update('amount')} type="number" min="1" placeholder="Amount" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
             <input value={form.dueDate} onChange={update('dueDate')} type="date" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />

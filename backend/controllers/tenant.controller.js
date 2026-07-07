@@ -1,5 +1,6 @@
 import Tenant from '../models/Tenant.js'
 import Rent from '../models/Rent.js'
+import User from '../models/User.js'
 
 function currentMonth() {
   const d = new Date()
@@ -11,6 +12,16 @@ function nextDueDate() {
   d.setDate(10)
   if (d < new Date()) d.setMonth(d.getMonth() + 1)
   return d
+}
+
+export async function getUnlinkedUsers(req, res) {
+  try {
+    const linked = (await Tenant.find({ user: { $ne: null } }).distinct('user')).filter(Boolean)
+    const users = await User.find({ role: 'tenant', _id: { $nin: linked } }).select('name email phone room')
+    res.json(users)
+  } catch (err) {
+    res.status(500).json({ message: 'Could not fetch users.', error: err.message })
+  }
 }
 
 export async function getTenantMe(req, res) {
@@ -26,17 +37,17 @@ export async function getTenants(req, res) {
 
 export async function createTenant(req, res) {
   try {
-    const tenant = await Tenant.create(req.body)
-    if (tenant.room && tenant.rentStatus === 'Paid') {
-      await Rent.create({
-        tenant: tenant._id,
-        month: currentMonth(),
-        amount: 0,
-        status: 'Paid',
-        dueDate: nextDueDate(),
-        paidOn: new Date(),
-      })
+    const payload = { ...req.body }
+    if (payload.user) {
+      const user = await User.findById(payload.user)
+      if (user) {
+        payload.name = payload.name || user.name
+        payload.email = payload.email || user.email
+        payload.phone = payload.phone || user.phone
+        payload.room = payload.room || user.room
+      }
     }
+    const tenant = await Tenant.create(payload)
     res.status(201).json(tenant)
   } catch (err) {
     res.status(400).json({ message: 'Could not create tenant.', error: err.message })
