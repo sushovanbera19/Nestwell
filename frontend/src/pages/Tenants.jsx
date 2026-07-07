@@ -5,7 +5,7 @@ import { Edit2, Mail, Phone, Trash2 } from 'lucide-react'
 import SearchInput from '../components/SearchInput'
 import StatusBadge from '../components/StatusBadge'
 import { initials, avatarTint } from '../lib/utils'
-import { tenantsApi } from '../lib/api'
+import { tenantsApi, roomsApi } from '../lib/api'
 
 const blankTenant = { name: '', email: '', phone: '', room: '', rentStatus: 'Pending' }
 
@@ -15,6 +15,7 @@ function formatDate(value) {
 
 export default function Tenants() {
   const [tenants, setTenants] = useState([])
+  const [rooms, setRooms] = useState([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,7 +27,9 @@ export default function Tenants() {
     async function loadTenants() {
       try {
         setLoading(true)
-        setTenants(await tenantsApi.list())
+        const [t, r] = await Promise.all([tenantsApi.list(), roomsApi.list()])
+        setTenants(t)
+        setRooms(r)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -61,17 +64,36 @@ export default function Tenants() {
     setShowForm(true)
   }
 
+  async function syncAllocation(tenant, newRoom, oldRoom) {
+    if (oldRoom && oldRoom !== newRoom) {
+      const oldRoomDoc = rooms.find((r) => r.number === oldRoom)
+      if (oldRoomDoc) await roomsApi.vacate({ roomId: oldRoomDoc._id, tenantId: tenant._id })
+    }
+    if (newRoom) {
+      const newRoomDoc = rooms.find((r) => r.number === newRoom && r.status !== 'Maintenance')
+      if (newRoomDoc) {
+        const { room } = await roomsApi.allocate({ roomId: newRoomDoc._id, tenantId: tenant._id })
+        setRooms((prev) => prev.map((r) => (r._id === room._id ? room : r)))
+      }
+    }
+  }
+
   const handleSave = async (e) => {
     e.preventDefault()
     setError('')
     try {
       if (editingId) {
+        const old = tenants.find((t) => t._id === editingId)
         const tenant = await tenantsApi.update(editingId, form)
         setTenants((prev) => prev.map((item) => (item._id === editingId ? tenant : item)))
+        if (old.room !== form.room) await syncAllocation(tenant, form.room, old.room)
       } else {
         const tenant = await tenantsApi.create(form)
         setTenants((prev) => [tenant, ...prev])
+        if (form.room) await syncAllocation(tenant, form.room, null)
       }
+      const updated = await tenantsApi.list()
+      setTenants(updated)
       resetForm()
     } catch (err) {
       setError(err.message)
@@ -82,8 +104,13 @@ export default function Tenants() {
     if (!window.confirm('Delete this tenant?')) return
     setError('')
     try {
+      const tenant = tenants.find((t) => t._id === id)
+      if (tenant?.room) {
+        const room = rooms.find((r) => r.number === tenant.room)
+        if (room) await roomsApi.vacate({ roomId: room._id, tenantId: id })
+      }
       await tenantsApi.remove(id)
-      setTenants((prev) => prev.filter((tenant) => tenant._id !== id))
+      setTenants((prev) => prev.filter((t) => t._id !== id))
       if (editingId === id) resetForm()
     } catch (err) {
       setError(err.message)
@@ -112,7 +139,14 @@ export default function Tenants() {
             <input required value={form.name} onChange={update('name')} placeholder="Full name" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
             <input required value={form.email} onChange={update('email')} type="email" placeholder="Email" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
             <input value={form.phone} onChange={update('phone')} placeholder="Phone" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
-            <input required value={form.room} onChange={update('room')} placeholder="Room" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
+            <select required value={form.room} onChange={update('room')} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
+              <option value="">Select room...</option>
+              {rooms.map((r) => (
+                <option key={r._id} value={r.number} disabled={r.occupied >= r.capacity}>
+                  {r.number} — {r.type} ({r.occupied}/{r.capacity})
+                </option>
+              ))}
+            </select>
             <select value={form.rentStatus} onChange={update('rentStatus')} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
               <option>Pending</option>
               <option>Paid</option>

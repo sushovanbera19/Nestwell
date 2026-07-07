@@ -37,8 +37,10 @@ export default function Login() {
 
   const handleContinue = () => {
     if (!selected) return
-    if (selected === ROLES.SUPER_ADMIN || selected === ROLES.ADMIN) {
-      navigate('/signin', { state: { role: selected } })
+    if (selected === ROLES.SUPER_ADMIN) {
+      navigate('/super-admin/login', { state: { role: selected } })
+    } else if (selected === ROLES.ADMIN) {
+      navigate('/admin/login', { state: { role: selected } })
     } else {
       navigate('/register', { state: { role: selected } })
     }

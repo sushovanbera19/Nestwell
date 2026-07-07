@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import RoomPageSkeleton from '../components/RoomPageSkeleton'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import RoomTag from '../components/RoomTag'
 import SearchInput from '../components/SearchInput'
 import { floors as fallbackFloors, roomStatuses } from '../data/rooms'
-import { roomsApi } from '../lib/api'
+import { roomsApi, tenantsApi } from '../lib/api'
 
 const blankRoom = { number: '', type: 'Single', floor: 1, status: 'Vacant', capacity: 1, occupied: 0, rent: '' }
 
 export default function Rooms() {
   const [rooms, setRooms] = useState([])
+  const [tenants, setTenants] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
@@ -18,11 +19,15 @@ export default function Rooms() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(blankRoom)
   const [editingId, setEditingId] = useState(null)
+  const [allocTarget, setAllocTarget] = useState(null)
+  const [selectedTenant, setSelectedTenant] = useState('')
 
   async function loadRooms() {
     try {
       setLoading(true)
-      setRooms(await roomsApi.list())
+      const [r, t] = await Promise.all([roomsApi.list(), tenantsApi.list()])
+      setRooms(r)
+      setTenants(t)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -107,6 +112,41 @@ export default function Rooms() {
     }
   }
 
+  const openAllocate = (room) => {
+    setSelectedTenant('')
+    setAllocTarget(room)
+  }
+
+  const handleAllocate = async () => {
+    if (!selectedTenant || !allocTarget) return
+    setError('')
+    try {
+      const { room } = await roomsApi.allocate({ roomId: allocTarget._id, tenantId: selectedTenant })
+      setRooms((prev) => prev.map((r) => (r._id === room._id ? room : r)))
+      const updated = await tenantsApi.list()
+      setTenants(updated)
+      setAllocTarget(null)
+      setSelectedTenant('')
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleVacate = async (room, tenant) => {
+    if (!window.confirm(`Vacate ${tenant.name} from Room ${room.number}?`)) return
+    setError('')
+    try {
+      const { room: updatedRoom } = await roomsApi.vacate({ roomId: room._id, tenantId: tenant._id })
+      setRooms((prev) => prev.map((r) => (r._id === updatedRoom._id ? updatedRoom : r)))
+      const updated = await tenantsApi.list()
+      setTenants(updated)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const unallocated = tenants.filter((t) => !t.room)
+
   if (loading) return <RoomPageSkeleton />
 
   return (
@@ -155,10 +195,80 @@ export default function Rooms() {
       )}
 
       <motion.div layout className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filtered.map((room) => <RoomTag key={room._id} room={room} onEdit={startEdit} onDelete={deleteRoom} />)}
+        {filtered.map((room) => (
+          <RoomTag
+            key={room._id}
+            room={room}
+            tenants={tenants}
+            onEdit={startEdit}
+            onDelete={deleteRoom}
+            onAllocate={openAllocate}
+            onVacate={handleVacate}
+          />
+        ))}
       </motion.div>
 
       {filtered.length === 0 && <p className="py-10 text-center font-sans text-sm text-ink/50 dark:text-paper/50">No rooms match these filters.</p>}
+
+      <AnimatePresence>
+        {allocTarget && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+            onClick={() => { setAllocTarget(null); setSelectedTenant('') }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-2xl border border-ink/10 bg-white p-6 shadow-card dark:border-paper/10 dark:bg-ink-soft"
+            >
+              <h2 className="font-display text-lg font-medium text-ink dark:text-paper">
+                Allocate tenant to Room {allocTarget.number}
+              </h2>
+              <p className="mt-1 font-sans text-sm text-ink/50 dark:text-paper/50">
+                {allocTarget.occupied}/{allocTarget.capacity} beds filled
+              </p>
+
+              <select
+                value={selectedTenant}
+                onChange={(e) => setSelectedTenant(e.target.value)}
+                className="mt-4 w-full rounded-lg border border-ink/10 bg-paper px-3.5 py-2.5 font-sans text-sm text-ink outline-none focus:border-teal dark:border-paper/10 dark:bg-ink dark:text-paper"
+              >
+                <option value="">Select a tenant...</option>
+                {unallocated.map((t) => (
+                  <option key={t._id} value={t._id}>{t.name} ({t.email})</option>
+                ))}
+              </select>
+
+              {unallocated.length === 0 && (
+                <p className="mt-3 font-sans text-xs text-ink/40 dark:text-paper/40">
+                  No unallocated tenants available.
+                </p>
+              )}
+
+              <div className="mt-5 flex justify-end gap-3">
+                <button
+                  onClick={() => { setAllocTarget(null); setSelectedTenant('') }}
+                  className="rounded-lg border border-ink/10 px-4 py-2 text-sm text-ink hover:bg-paper dark:border-paper/10 dark:text-paper dark:hover:bg-ink"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAllocate}
+                  disabled={!selectedTenant}
+                  className="rounded-lg bg-teal px-5 py-2 text-sm font-medium text-ink hover:bg-teal-deep disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Allocate
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

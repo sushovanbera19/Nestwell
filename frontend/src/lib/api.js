@@ -49,6 +49,9 @@ export const roomsApi = {
   create: (payload) => api('/rooms', { method: 'POST', body: JSON.stringify(payload) }),
   update: (id, payload) => api(`/rooms/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   remove: (id) => api(`/rooms/${id}`, { method: 'DELETE' }),
+  allocate: (payload) => api('/rooms/allocate', { method: 'POST', body: JSON.stringify(payload) }),
+  vacate: (payload) => api('/rooms/vacate', { method: 'POST', body: JSON.stringify(payload) }),
+  roomTenants: (id) => api(`/rooms/${id}/tenants`),
 }
 
 export const tenantsApi = {

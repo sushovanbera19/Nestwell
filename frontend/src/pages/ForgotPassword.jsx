@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import ThemeToggle from '../components/ThemeToggle'
 import { authApi } from '../lib/api'
 
 export default function ForgotPassword() {
+  const location = useLocation()
+  const role = location.state?.role
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -20,7 +22,8 @@ export default function ForgotPassword() {
     }
     try {
       setSubmitting(true)
-      await authApi.forgotPassword({ email: email.trim() })
+      const payload = role ? { email: email.trim(), role } : { email: email.trim() }
+      await authApi.forgotPassword(payload)
       setSent(true)
     } catch (err) {
       setError(err.message)

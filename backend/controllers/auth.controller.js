@@ -77,12 +77,13 @@ export async function login(req, res) {
 
 export async function forgotPassword(req, res) {
   try {
-    const { email } = req.body
+    const { email, role } = req.body
     if (!email) {
       return res.status(400).json({ message: 'Email is required.' })
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() })
+    const query = role ? { email: email.toLowerCase(), role } : { email: email.toLowerCase() }
+    const user = await User.findOne(query)
     if (!user) {
       return res.status(404).json({ message: 'No account found with this email.' })
     }

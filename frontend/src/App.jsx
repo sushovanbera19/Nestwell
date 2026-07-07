@@ -5,7 +5,8 @@ import { useAuth, ROLES } from './context/AuthContext'
 
 import Login from './pages/Login'
 import Register from './pages/Register'
-import SignIn from './pages/SignIn'
+import SuperAdminLogin from './pages/SuperAdminLogin'
+import AdminLogin from './pages/AdminLogin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
@@ -31,7 +32,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/signin" element={<SignIn />} />
+      <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
 

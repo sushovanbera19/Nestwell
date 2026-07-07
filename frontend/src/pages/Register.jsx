@@ -26,9 +26,9 @@ export default function Register() {
   if (!role) {
     return <Navigate to="/login" replace />
   }
-  // Only tenants can self-register
   if (role !== 'tenant') {
-    return <Navigate to="/signin" state={{ role }} replace />
+    const path = role === 'superadmin' ? '/super-admin/login' : '/admin/login'
+    return <Navigate to={path} state={{ role }} replace />
   }
 
   useEffect(() => {
@@ -82,7 +82,7 @@ export default function Register() {
         phone: form.phone,
         password: form.password,
       })
-      navigate('/signin', { state: { role, email: form.email } })
+      navigate('/admin/login', { state: { role, email: form.email } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -266,7 +266,7 @@ export default function Register() {
         <p className="mt-5 text-center font-sans text-xs text-ink/50 dark:text-paper/50">
           Already registered?{' '}
           <Link
-            to="/signin"
+            to="/admin/login"
             state={{ role }}
             className="font-medium text-teal-deep transition-colors hover:text-teal dark:text-teal dark:hover:text-teal-mist"
           >
