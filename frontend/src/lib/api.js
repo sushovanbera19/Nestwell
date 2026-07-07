@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.DEV ? 'https://nestwell.onrender.com/api' : '/api'
+const API_BASE_URL = 'https://nestwell.onrender.com/api'
 const AUTH_STORAGE_KEY = 'nestwell-auth'
 
 function getToken() {
