@@ -6,6 +6,8 @@ import { useAuth, ROLES } from './context/AuthContext'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import SignIn from './pages/SignIn'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Rooms from './pages/Rooms'
 import Tenants from './pages/Tenants'
@@ -30,6 +32,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/signin" element={<SignIn />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
       <Route
         element={

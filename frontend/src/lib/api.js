@@ -38,6 +38,10 @@ export const authApi = {
   login: (payload) => api('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
   me: () => api('/auth/me'),
   avatar: (avatar) => api('/auth/avatar', { method: 'PATCH', body: JSON.stringify({ avatar }) }),
+  forgotPassword: (payload) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(payload) }),
+  resetPassword: (token, payload) => api(`/auth/reset-password/${token}`, { method: 'POST', body: JSON.stringify(payload) }),
+  googleLogin: (payload) => api('/auth/google', { method: 'POST', body: JSON.stringify(payload) }),
+  facebookLogin: (payload) => api('/auth/facebook', { method: 'POST', body: JSON.stringify(payload) }),
 }
 
 export const roomsApi = {

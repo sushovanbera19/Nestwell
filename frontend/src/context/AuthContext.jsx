@@ -78,6 +78,10 @@ export function AuthProvider({ children }) {
     return user
   }
 
+  const setAuthDirect = ({ token, user }) => {
+    setAuth({ token, ...user })
+  }
+
   const logout = () => setAuth(null)
 
   // Profile image upload setting — stores a data URL on the current
@@ -89,7 +93,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ auth, role: auth?.role || null, login, logout, updateAvatar, checkingSession }}>
+    <AuthContext.Provider value={{ auth, role: auth?.role || null, login, setAuthDirect, logout, updateAvatar, checkingSession }}>
       {children}
     </AuthContext.Provider>
   )

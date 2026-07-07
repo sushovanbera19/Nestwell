@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, ShieldCheck, UserCog, User2 } from 'lucide-react'
 import { useAuth, ROLES } from '../context/AuthContext'
@@ -118,7 +118,12 @@ export default function Login() {
         >
           Continue
         </motion.button>
-      </motion.div>
-    </div>
+
+        <p className="mt-4 text-center font-sans text-xs text-ink/50 dark:text-paper/50">
+          <Link to="/forgot-password" className="font-medium text-teal-deep transition-colors hover:text-teal dark:text-teal dark:hover:text-teal-mist">
+            Forgot password?
+          </Link>
+        </p>
+      </div>
   )
 }

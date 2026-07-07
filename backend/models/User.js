@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 
 export const ROLES = ['superadmin', 'admin', 'tenant']
 
@@ -10,9 +11,11 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 4, select: false },
     phone: { type: String, default: '' },
     role: { type: String, enum: ROLES, required: true },
-    pg: { type: String, default: 'Riverside PG' }, // property the user belongs to / manages
-    room: { type: String, default: '' }, // only meaningful for tenants
-    avatar: { type: String, default: '' }, // data URL or image URL
+    pg: { type: String, default: 'Riverside PG' },
+    room: { type: String, default: '' },
+    avatar: { type: String, default: '' },
+    resetPasswordToken: { type: String, default: '' },
+    resetPasswordExpire: { type: Date, default: null },
   },
   { timestamps: true }
 )
@@ -29,6 +32,13 @@ userSchema.pre('save', async function hashPassword(next) {
 
 userSchema.methods.comparePassword = function comparePassword(candidate) {
   return bcrypt.compare(candidate, this.password)
+}
+
+userSchema.methods.getResetToken = function getResetToken() {
+  const token = crypto.randomBytes(32).toString('hex')
+  this.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex')
+  this.resetPasswordExpire = Date.now() + 60 * 60 * 1000
+  return token
 }
 
 export default mongoose.model('User', userSchema)
