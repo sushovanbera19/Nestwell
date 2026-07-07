@@ -124,6 +124,7 @@ export default function Login() {
             Forgot password?
           </Link>
         </p>
-      </div>
+      </motion.div>
+    </div>
   )
 }
