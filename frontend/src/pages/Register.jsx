@@ -82,7 +82,7 @@ export default function Register() {
         phone: form.phone,
         password: form.password,
       })
-      navigate('/admin/login', { state: { role, email: form.email } })
+      navigate('/tenant/login', { state: { role, email: form.email } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -266,8 +266,8 @@ export default function Register() {
         <p className="mt-5 text-center font-sans text-xs text-ink/50 dark:text-paper/50">
           Already registered?{' '}
           <Link
-            to="/admin/login"
-            state={{ role }}
+            to="/tenant/login"
+            state={{ role: 'tenant' }}
             className="font-medium text-teal-deep transition-colors hover:text-teal dark:text-teal dark:hover:text-teal-mist"
           >
             Sign in instead

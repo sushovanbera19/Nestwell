@@ -42,7 +42,7 @@ export default function Login() {
     } else if (selected === ROLES.ADMIN) {
       navigate('/admin/login', { state: { role: selected } })
     } else {
-      navigate('/register', { state: { role: selected } })
+      navigate('/tenant/login', { state: { role: selected } })
     }
   }
 
