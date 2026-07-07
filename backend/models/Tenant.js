@@ -5,7 +5,7 @@ const tenantSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, lowercase: true, trim: true },
     phone: { type: String, default: '' },
-    room: { type: String, required: true },
+    room: { type: String, default: '' },
     joined: { type: Date, default: Date.now },
     rentStatus: { type: String, enum: ['Paid', 'Pending', 'Overdue'], default: 'Pending' },
     pg: { type: String, default: 'Riverside PG' },
