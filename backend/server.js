@@ -18,6 +18,13 @@ app.use(express.json({ limit: '5mb' }))
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
+app.use(express.static('public'))
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api')) return next()
+  res.sendFile('index.html', { root: 'public' })
+})
+
 app.use('/api/auth', authRoutes)
 app.use('/api/rooms', roomRoutes)
 app.use('/api/tenants', tenantRoutes)
