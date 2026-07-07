@@ -23,6 +23,10 @@ export default function Register() {
   if (!role) {
     return <Navigate to="/login" replace />
   }
+  // Only tenants can self-register
+  if (role !== 'tenant') {
+    return <Navigate to="/signin" state={{ role }} replace />
+  }
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 

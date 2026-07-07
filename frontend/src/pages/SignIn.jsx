@@ -74,7 +74,7 @@ export default function SignIn() {
           Sign in as {ROLE_LABELS[role]}
         </h1>
         <p className="mt-1 font-sans text-sm text-ink/50 dark:text-paper/50">
-          Enter the credentials you just registered with to open the dashboard.
+          Enter your credentials to access the dashboard.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">

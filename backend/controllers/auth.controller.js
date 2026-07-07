@@ -28,6 +28,11 @@ export async function register(req, res) {
     if (!ROLES.includes(role)) {
       return res.status(400).json({ message: 'Invalid role.' })
     }
+    if (role === 'superadmin' || role === 'admin') {
+      return res.status(403).json({
+        message: `${role === 'superadmin' ? 'Super admin' : 'Admin'} accounts cannot be self-registered. Contact your system administrator.`,
+      })
+    }
 
     const existing = await User.findOne({ email: email.toLowerCase(), role })
     if (existing) {

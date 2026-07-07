@@ -37,9 +37,11 @@ export default function Login() {
 
   const handleContinue = () => {
     if (!selected) return
-    // Instead of logging straight in, the chosen role now has to be
-    // registered and then signed in before reaching its dashboard.
-    navigate('/register', { state: { role: selected } })
+    if (selected === ROLES.SUPER_ADMIN || selected === ROLES.ADMIN) {
+      navigate('/signin', { state: { role: selected } })
+    } else {
+      navigate('/register', { state: { role: selected } })
+    }
   }
 
   return (
@@ -65,7 +67,7 @@ export default function Login() {
           Sign in to continue
         </h1>
         <p className="mt-1 font-sans text-sm text-ink/50 dark:text-paper/50">
-          Pick a role, register once, then sign in with your backend account.
+          Super admin &amp; admin accounts are created by your system administrator. Sign in below, or register as a tenant.
         </p>
 
         <div className="mt-6 space-y-3">
