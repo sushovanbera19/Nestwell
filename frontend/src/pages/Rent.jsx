@@ -1,14 +1,28 @@
 import { useEffect, useMemo, useState } from 'react'
 import RentSkeleton from '../components/RentSkeleton'
 import { motion } from 'framer-motion'
-import { AlertTriangle, Clock3, Trash2, Wallet } from 'lucide-react'
+import { AlertTriangle, Clock3, Trash2, Wallet, Plus } from 'lucide-react'
 import StatCard from '../components/StatCard'
 import StatusBadge from '../components/StatusBadge'
 import SearchInput from '../components/SearchInput'
 import { formatCurrency } from '../lib/utils'
-import { rentApi } from '../lib/api'
+import { rentApi, tenantsApi } from '../lib/api'
 
 const filters = ['All', 'Paid', 'Pending', 'Overdue']
+
+const blankRent = { tenant: '', month: '', amount: '', dueDate: '', status: 'Pending' }
+
+function currentMonth() {
+  const d = new Date()
+  return d.toLocaleString('en-US', { month: 'long', year: 'numeric' })
+}
+
+function defaultDueDate() {
+  const d = new Date()
+  d.setDate(10)
+  if (d < new Date()) d.setMonth(d.getMonth() + 1)
+  return d.toISOString().slice(0, 10)
+}
 
 function tenantName(record) {
   return record.tenant?.name || 'Unknown tenant'
@@ -20,16 +34,21 @@ function tenantRoom(record) {
 
 export default function Rent() {
   const [records, setRecords] = useState([])
+  const [tenants, setTenants] = useState([])
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('All')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState(blankRent)
 
   useEffect(() => {
     async function loadRent() {
       try {
         setLoading(true)
-        setRecords(await rentApi.list())
+        const [r, t] = await Promise.all([rentApi.list(), tenantsApi.list()])
+        setRecords(r)
+        setTenants(t)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -82,6 +101,33 @@ export default function Rent() {
     }
   }
 
+  const update = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
+
+  const resetForm = () => {
+    setForm(blankRent)
+    setShowForm(false)
+  }
+
+  const handleCreate = async (e) => {
+    e.preventDefault()
+    setError('')
+    try {
+      const payload = {
+        tenant: form.tenant,
+        month: form.month || currentMonth(),
+        amount: Number(form.amount),
+        dueDate: form.dueDate || defaultDueDate(),
+        status: form.status,
+        paidOn: form.status === 'Paid' ? new Date().toISOString() : null,
+      }
+      const record = await rentApi.create(payload)
+      setRecords((prev) => [record, ...prev])
+      resetForm()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   if (loading) return <RentSkeleton />
 
   return (
@@ -98,14 +144,36 @@ export default function Rent() {
         <div className="w-full max-w-xs">
           <SearchInput value={query} onChange={setQuery} placeholder="Search tenant or room" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {filters.map((f) => (
             <button key={f} onClick={() => setFilter(f)} className={`rounded-full border px-3.5 py-1.5 font-sans text-xs transition-colors ${filter === f ? 'border-ink bg-ink text-paper dark:border-teal dark:bg-teal dark:text-ink' : 'border-ink/15 text-ink/60 hover:border-ink/30 hover:text-ink dark:border-paper/15 dark:text-paper/60 dark:hover:border-paper/30 dark:hover:text-paper'}`}>
               {f}
             </button>
           ))}
+          <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }} onClick={() => (showForm ? resetForm() : setShowForm(true))} className="ml-2 rounded-lg bg-ink px-4 py-2 font-sans text-sm font-medium text-paper transition-colors hover:bg-teal-deep dark:bg-teal dark:text-ink dark:hover:bg-teal-deep">
+            + Add record
+          </motion.button>
         </div>
       </div>
+
+      {showForm && (
+        <motion.form onSubmit={handleCreate} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-2xl border border-ink/10 bg-white p-6 shadow-card dark:border-paper/10 dark:bg-ink-soft">
+          <h2 className="mb-5 font-display text-lg font-medium text-ink dark:text-paper">Create Rent Record</h2>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <select required value={form.tenant} onChange={update('tenant')} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
+              <option value="">Select tenant...</option>
+              {tenants.map((t) => <option key={t._id} value={t._id}>{t.name} — Room {t.room || '-'}</option>)}
+            </select>
+            <input value={form.month} onChange={update('month')} placeholder={`e.g. ${currentMonth()}`} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
+            <input required value={form.amount} onChange={update('amount')} type="number" min="1" placeholder="Amount" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
+            <input value={form.dueDate} onChange={update('dueDate')} type="date" className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper" />
+          </div>
+          <div className="mt-5 flex justify-end gap-3">
+            <button type="button" onClick={resetForm} className="rounded-lg border border-ink/10 px-4 py-2 text-sm text-ink hover:bg-paper dark:border-paper/10 dark:text-paper dark:hover:bg-ink">Cancel</button>
+            <button type="submit" className="rounded-lg bg-teal px-5 py-2 text-sm font-medium text-ink hover:bg-teal-deep">Create record</button>
+          </div>
+        </motion.form>
+      )}
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="overflow-hidden rounded-2xl border border-ink/10 bg-white shadow-card dark:border-paper/10 dark:bg-ink-soft">
         <div className="overflow-x-auto">

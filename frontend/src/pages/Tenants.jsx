@@ -147,11 +147,10 @@ export default function Tenants() {
                 </option>
               ))}
             </select>
-            <select value={form.rentStatus} onChange={update('rentStatus')} className="rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm focus:border-teal focus:outline-none dark:border-paper/10 dark:bg-ink dark:text-paper">
-              <option>Pending</option>
-              <option>Paid</option>
-              <option>Overdue</option>
-            </select>
+            <div className="flex items-center gap-2 rounded-lg border border-ink/10 px-4 py-2.5 font-sans text-sm dark:border-paper/10 dark:bg-ink dark:text-paper">
+              <StatusBadge status={form.rentStatus} />
+              <span className="text-xs text-ink/50 dark:text-paper/50">auto-synced from Rent</span>
+            </div>
           </div>
           <div className="mt-5 flex justify-end gap-3">
             <button type="button" onClick={resetForm} className="rounded-lg border border-ink/10 px-4 py-2 text-sm text-ink hover:bg-paper dark:border-paper/10 dark:text-paper dark:hover:bg-ink">Cancel</button>
